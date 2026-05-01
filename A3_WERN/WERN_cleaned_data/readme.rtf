@@ -1,0 +1,125 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2759
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fswiss\fcharset0 Helvetica-Bold;\f2\fswiss\fcharset0 Helvetica-Oblique;
+}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{decimal\}.}{\leveltext\leveltemplateid1\'02\'00.;}{\levelnumbers\'01;}\fi-360\li720\lin720 }{\listname ;}\listid1}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}}
+\margl1440\margr1440\vieww26680\viewh17460\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 # README\
+\
+# WERN Cleaned Dataset (v3.0)\
+PI: John Ahlquist & Jake Grumbach\
+GSR: Eric Thai\
+Current version v3.0 (May 25, 2023)\
+\
+Recommended Citation:   Ahlquist, John S., Jacob M. Grumbach, and Thomas A. Kochan. 2022. \'93Worker Empowerment Research Network Workers\'92 Survey.\'94 [dataset].  v3.0\
+\
+Cleaning script: \'93WERN Survey/GSR_folder/wern cleaning directory/wern_cleaning.R\'94\
+\
+Raw dataset: \'93WERN Survey/WS_raw_data/ACLU Worker Survey_September 12, 2022_17.09.csv"\
+\
+Cleaned and labeled dataset: \'93WERN Survey/WERN_cleaned_data/wern_cleaned_v2.1.rds\'94 (.rds file contain labels) and wern_cleaned_v2.1.csv (with the accompanying metadata datasets (see below)). \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Supplemental datasets required for the cleaning and labelling process. Important to note is that these are hand made
+\f0\b0 \
+\
+1. wern_pre_dict.csv: is generated from copying four columns (order, question, raw_var, and final_var) from survey_code_translation.xlsx located in \'93WERN Survey/GSR_folder.\'94 This is necessary for the labelling process. \
+2. response_type_likert_binary.csv\'94: is generated from copying the \'93final_var\'94 and \'93response-type\'94 column from survey_code_translation.xlsx located in \'93WERN Survey/GSR_folder.\'94 This would allow me to generate lists of response type questions to be cleaned en masse.\
+\
+
+\f1\b How to apply variable and value labels into wern_cleaned_v1.0.csv:\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 Since wern_cleaned_v1.0.csv does not carry the metadata, you will have to apply the metadata into the data frame. Please use the \'93apply_labels_tutorial.R\'94 script to apply variable and value labels into the cleaned data.
+\f1\b \
+
+\f0\b0 \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Note on the data
+\f0\b0  \
+12/28/2022: The team_stability variable (Q2.2) is missing the first 45 observations in the raw data independent of the condition placed on the question. Users should be aware of this missing-data issue.\
+\
+
+\f1\b Update: v.1.1\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 1/20/2023: Added rtw_state that codes whether the respondent work in a Right to Work state. The coding is from this website: https://www.nrtw.org/right-to-work-states/.
+\f1\b \
+
+\f0\b0 1/24/2023: Removed the labels for -77 in the following variables (cancel_shift_num (Q2.11), ware_prod_anxiety_num (Q11.9_1), ware_prod_bathroom_num (Q11.9_2)). An error was made during the v1 cleaning of the dataset where \'93not applicable\'94 was recoded and labeled as -77 based on the questionaire options; however, Qualtrics automatically recode responses to the \'93not applicable\'94 option as NAs; as a result, the labeling, if get_labels() is used, would map the value labels incorrectly as it operates in a sequential manner (i.e., label for the lowest value comes first). \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Update: v1.2
+\f0\b0 \
+2/11/2023: \
+1. Added rtw_live and rtw_state that codes whether the respondent live and work in a Right to Work state. The coding is from this website: https://www.nrtw.org/right-to-work-states/. \
+2. Added live_work_dif that codes whether the respondent live and work in different state.\
+3. Fixed the coding for personal_choice_offwork (Q2.14), now \'93Don\'92t Know\'94 is corrected coded as -77. \
+\
+
+\f1\b Update: v2.0\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 2/21/23\
+Added two survey weights: 
+\f1\b \
+\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
+\ls1\ilvl0
+\f0\b0 \cf0 {\listtext	1.	}
+\f2\i Industry-specific weights
+\f0\i0  (rk_wgt_ind) is calculated using industry-specific gender, age, and race distribution for employed workers from the 2021 ACS. Industry-specific weights should be used when generalizing to the population of workers in a specific industry. \
+{\listtext	2.	}
+\f2\i Final weights
+\f0\i0  (rk_wgt_final) weights the sample to the population of employed workers in the 5 targeted industries. It is calculated by re-weighting rk_wgt_ind for workers in industry 
+\f2\i j 
+\f0\i0 by the share of workers in our five industries who were employed in industry 
+\f2\i j 
+\f0\i0 based on the 2021 ACS. Final weights should be used when generalizing to the population of people working in our 5 targeted industries. 
+\f1\b \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+Update: v2.1\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 4/3/23\
+Fixed inconsistencies in several questions that had a \'93check all that applies\'94 response pattern.  In these questions, respondents were able to select  \'93none of the above.\'94 In the Qualtrics raw data, NOTA respondents are simply missing. In earlier versions of the dataset, failure to encode NOTA responses induced NA values (instead of 0 as intended) for some derived variable. For example, when a respondent did not select any options in the 
+\f2\i benefits
+\f0\i0  question, their response is coded as NA. When 
+\f2\i benefits 
+\f0\i0 is recoded to 
+\f2\i benefits_health
+\f0\i0 , the non-respondent\'92s value is coded as NA instead of 0 for 
+\f2\i benefits_health. 
+\f0\i0 Although we do not know precisely whether a particular respondent selected \'93none of the above\'94 and Qualtrics did not record this response or whether they skipped the question, we decided to fill in all missing values as \'93NOTA\'94 to minimize missingness in recoded and derived variables. We identify 6 variables that had this problem: benefits (Q1.14), problem_exp (Q3.4), ware_benefits (Q11.6), ware_tech_direct (Q11.7), ware_tech_indirect (Q11.8), pol_activity (Q13.15). \
+\
+However, there are three \'93check all that applies\'94 variables (ware_ship (Q11.3), problem_help (Q3.5), surveillance (Q4.8)) where \'93none of the above\'94 was correctly coded in the raw dataset. For these variables, we did not fill in missing observations with \'93NOTA\'94 and leave NAs as they are. \
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Update: v2.2\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 5/22/23\
+Fixed the following variables naming to correspond with the questions asked retail_auton_clock (9.5_1), retail_auton_what (9.5_2), retail_auton_order (9.5_3). Also for these three variables, the value labels are corrected. In particular, 3 = \'93Remain the Same\'94 is corrected to 3 = \'93Rarely.\'94\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Update: v3.0
+\f0\b0 \
+5/25/23\
+Fixed a coding error used to generate raking weights. Previous versions had an error in coding NAICS code for the retail industry in the IPUMS population data, leading to incorrect weights. 
+\f1\b \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 \
+\
+}

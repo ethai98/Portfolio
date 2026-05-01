@@ -1,0 +1,66 @@
+---
+title: "WERN Analysis Codebook v3.0"
+author: 'PI: John Ahlquist, Jake Grumbach. GSR: Eric Thai'
+date: "May 25, 2023"
+output:
+  html_document: default
+  tufte::tufte_handout:
+    latex_engine: xelatex
+  pdf_document: default
+  bookdown::pdf_document2:
+    latex_engine: lualatex
+---
+
+```{r setup, include=FALSE}
+knit_by_pkgdown <- !is.null(knitr::opts_chunk$get("fig.retina"))
+knitr::opts_chunk$set(
+  warning = TRUE, # show warnings during codebook generation
+  message = TRUE, # show messages during codebook generation
+  error = TRUE, # do not interrupt codebook generation in case of errors,
+                # TRUE is usually better for debugging
+  echo = FALSE  # show R code
+)
+ggplot2::theme_set(ggplot2::theme_bw())
+# load library
+library(readr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(codebook)
+library(xtable)
+library(DT)
+setwd("~/Dropbox/WERN Survey/WERN_codebook")
+```
+
+
+```{r prepare_codebook}
+library(codebook)
+
+# see codebook data preparation in codebook_test.R
+
+wern_codebook <- readRDS("../WERN_analysis_data/wern_analysis_v3.0.rds")
+
+
+# omit the following lines, if your missing values are already properly labelled
+wern_codebook <- detect_missing(wern_codebook,
+    only_labelled = TRUE, # only labelled values are autodetected as missing
+    # negative_values_are_missing = T, # negative values are missing values
+    learn_from_labels = TRUE
+    )
+
+metadata(wern_codebook)$name <- "WERN Analysis Codebook v3.0"
+metadata(wern_codebook)$description <- "Version 3.0 of codebook describing WERN analysis data, for internal use only."
+metadata(wern_codebook)$datePublished <- "2023-05-25"
+
+wern_codebook_table <- codebook_table(wern_codebook) 
+wern_codebook_table <- wern_codebook_table %>% 
+  select(name, label, value_labels) %>%
+  rename(var_name = name,
+         "question/description" = label)
+```
+
+```{r datatable, results='asis'}
+# datatable provide nice, searcheable HTML document. 
+datatable(wern_codebook_table)
+```
+

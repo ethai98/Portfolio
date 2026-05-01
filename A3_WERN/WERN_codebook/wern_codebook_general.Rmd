@@ -1,0 +1,320 @@
+---
+title: "WERN Codebook v3.0"
+author: 'PI: John Ahlquist, Jake Grumbach. GSR: Eric Thai'
+date: "July 5, 2023"
+output:
+  html_document: default
+  tufte::tufte_handout:
+    latex_engine: xelatex
+  pdf_document: default
+  bookdown::pdf_document2:
+    latex_engine: lualatex
+---
+
+```{r setup, include=FALSE}
+knit_by_pkgdown <- !is.null(knitr::opts_chunk$get("fig.retina"))
+knitr::opts_chunk$set(
+  warning = FALSE, # show warnings during codebook generation
+  message = FALSE, # show messages during codebook generation
+  error = TRUE, # do not interrupt codebook generation in case of errors,
+                # TRUE is usually better for debugging
+  echo = FALSE  # show R code
+)
+ggplot2::theme_set(ggplot2::theme_bw())
+# load library
+library(readr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(codebook)
+library(xtable)
+library(DT)
+library(here)
+setwd("~/Dropbox/WERN Survey/WERN_codebook")
+```
+
+
+```{r prepare_codebook, warning=FALSE, }
+library(codebook)
+
+# 0. code from wern_cleaning (all to concord raw_vars) -----
+wern_cleaned_prelabels <- readRDS(here("GSR_folder/wern cleaning directory", "wern_cleaned_prelabels.rds"))
+
+### 1.1 transpose the variable names into a column of variable. 
+variable_names <- as.data.frame(as.matrix(names(wern_cleaned_prelabels)))%>%
+  rename(final_var = V1)
+
+### 1.2 import dictionary, pre-cleaned (copied and pasted from survey_code_translation.xlsx) ----
+wern_pre_dict <- read_csv(here("GSR_folder/wern cleaning directory", "wern_pre_dict.csv"))
+
+### 1.3 fill in missing "final_var" for survey information variables, then right join with the variable names from the cleaned dataset
+wern_pre_dict2 <- wern_pre_dict %>%
+  mutate(final_var = ifelse(is.na(final_var), raw_var, final_var)) %>%
+  right_join(variable_names)
+
+### 1.4 create survey info dataframe of response ID, startdate, endate, and duration ----
+
+wern_pre_dict3_survey_info <- wern_pre_dict2 %>%
+  filter(order <= 17 | order >= 331)
+
+### 1.5 arrange questions and fill "down" question and the original question code ----
+
+wern_pre_dict_organized <- wern_pre_dict2 %>%
+  filter(order %in% (18:330) | is.na(order) ) %>% # take out survey information, keep everything else. 
+  select(-order) %>%
+  arrange(question) %>%
+  arrange(final_var) %>%
+  # 1.5.1 fill in questions for check all that apply questions: ----
+## 1.5.1.1 benefits
+mutate(question = ifelse(final_var == "benefits_childcare", "Which of the benefits on this list does your employer offer to workers like you at your primary job? [Please select all that apply]: Subsidized childcare", question),
+       question = ifelse(final_var == "benefits_count", "Which of the benefits on this list does your employer offer to workers like you at your primary job? Number of benefits (Count)", question),
+       question = ifelse(final_var == "benefits_emergency_cash", "Which of the benefits on this list does your employer offer to workers like you at your primary job? [Please select all that apply]: Cash aid to help in times of family emergency", question),
+       question = ifelse(final_var == "benefits_health", "Which of the benefits on this list does your employer offer to workers like you at your primary job? [Please select all that apply]: Health plan or medical insurance", question),
+       question = ifelse(final_var == "benefits_parental", "Which of the benefits on this list does your employer offer to workers like you at your primary job? [Please select all that apply]: Paid parental leave", question),
+       question = ifelse(final_var == "benefits_retirement", "Which of the benefits on this list does your employer offer to workers like you at your primary job? [Please select all that apply]: A retirement plan other than Social Security", question),
+       question = ifelse(final_var == "benefits_sick", "Which of the benefits on this list does your employer offer to workers like you at your primary job? [Please select all that apply]: Paid sick days", question),
+       question = ifelse(final_var == "benefits_training", "Which of the benefits on this list does your employer offer to workers like you at your primary job? [Please select all that apply]: Opportunities for training", question),
+       question = ifelse(final_var == "benefits_tuition", "Which of the benefits on this list does your employer offer to workers like you at your primary job? [Please select all that apply]: Tuition assistance", question),
+       question = ifelse(final_var == "benefits_vacation", "Which of the benefits on this list does your employer offer to workers like you at your primary job? [Please select all that apply]: Paid vacation days", question)) %>%
+  ## 1.5.1.2 problem_exp
+  mutate(question = ifelse(final_var == "problem_exp_count", "In the past 6 months, have you experienced any of the following at work?: Number of problems. (Count)", question),
+         question = ifelse(final_var == "problem_exp_late_pay", "In the past 6 months, have you experienced any of the following at work? [Please select all that apply]: Didn't get paid on time", question),
+         question = ifelse(final_var == "problem_exp_no_pay", "In the past 6 months, have you experienced any of the following at work? [Please select all that apply]: Didn't get the pay you were owed", question),
+         question = ifelse(final_var == "problem_exp_pay_equip", "In the past 6 months, have you experienced any of the following at work? [Please select all that apply]: Had to pay for equipment out of your own pocket", question),
+         question = ifelse(final_var == "problem_exp_reduced_hours", "In the past 6 months, have you experienced any of the following at work? [Please select all that apply]: Reduced hours", question),
+         question = ifelse(final_var == "problem_exp_schedule_change", "In the past 6 months, have you experienced any of the following at work? [Please select all that apply]: Last minute schedule change", question),
+         question = ifelse(final_var == "problem_exp_second_class", "In the past 6 months, have you experienced any of the following at work? [Please select all that apply]: Treated like a second-class citizenSelected Choice", question),
+         question = ifelse(final_var == "problem_exp_sex_harass", "In the past 6 months, have you experienced any of the following at work? [Please select all that apply]: Unwanted sexual advances or harassment", question),
+         question = ifelse(final_var == "problem_exp_unsafe", "In the past 6 months, have you experienced any of the following at work? [Please select all that apply]: A dangerous or unsafe work environment", question),
+         question = ifelse(final_var == "problem_exp_verbal_abuse", "In the past 6 months, have you experienced any of the following at work? [Please select all that apply]: Verbal abuse", question),
+         question = ifelse(final_var == "problem_exp_other", "In the past 6 months, have you experienced any of the following at work? [Please select all that apply]: - Other", question)) %>%
+  ## 1.5.1.3 problem_help
+  mutate(question = ifelse(final_var == "problem_help_church", "When you experienced this problem at your workplace, who did you turn to for help or advice? [Please select all that apply]: Church or religious group", question),
+         question = ifelse(final_var == "problem_help_count", "When you experienced this problem at your workplace, who did you turn to for help or advice? Number of help. (Count)", question),
+         question = ifelse(final_var == "problem_help_coworker", "When you experienced this problem at your workplace, who did you turn to for help or advice? [Please select all that apply]: Current co-workers", question),
+         question = ifelse(final_var == "problem_help_family", "When you experienced this problem at your workplace, who did you turn to for help or advice? [Please select all that apply]: Family member", question),
+         question = ifelse(final_var == "problem_help_former_coworker", "When you experienced this problem at your workplace, who did you turn to for help or advice? [Please select all that apply]: Former co-workers", question),
+         question = ifelse(final_var == "problem_help_friend", "When you experienced this problem at your workplace, who did you turn to for help or advice? [Please select all that apply]: Close friend", question),
+         question = ifelse(final_var == "problem_help_hr", "When you experienced this problem at your workplace, who did you turn to for help or advice? [Please select all that apply]: An HR representative", question),
+         question = ifelse(final_var == "problem_help_manager", "When you experienced this problem at your workplace, who did you turn to for help or advice? [Please select all that apply]: Manager or supervisor", question),
+         question = ifelse(final_var == "problem_help_other_org", "When you experienced this problem at your workplace, who did you turn to for help or advice? [Please select all that apply]: Other community organization", question),
+         question = ifelse(final_var == "problem_help_social_media", "When you experienced this problem at your workplace, who did you turn to for help or advice? [Please select all that apply]: Social media", question),
+         question = ifelse(final_var == "problem_help_union_rep", "When you experienced this problem at your workplace, who did you turn to for help or advice? [Please select all that apply]: Labor union representative", question)) %>%
+  ## 1.5.1.4 pol_activity
+  mutate(question = ifelse(final_var == "pol_activity_contact_rep", "In the past three years, have you participated in any of the following activities? [Please select all that apply]: Contacted an elected government official", question),
+         question = ifelse(final_var == "pol_activity_count", "In the past three years, have you participated in any of the following activities? Number of activity participated. (Count)", question),
+         question = ifelse(final_var == "pol_activity_donate", "In the past three years, have you participated in any of the following activities? [Please select all that apply]: Donated money to a political candidate, campaign, or party", question),
+         question = ifelse(final_var == "pol_activity_group", "In the past three years, have you participated in any of the following activities? [Please select all that apply]: Joined an online group or community focused on political issues", question),
+         question = ifelse(final_var == "pol_activity_petition", "In the past three years, have you participated in any of the following activities? [Please select all that apply]: Signed a petition", question),
+         question = ifelse(final_var == "pol_activity_protest", "In the past three years, have you participated in any of the following activities? [Please select all that apply]: Protest or demonstration", question),
+         question = ifelse(final_var == "pol_activity_rally", "In the past three years, have you participated in any of the following activities? [Please select all that apply]: Political rally", question),
+         question = ifelse(final_var == "pol_activity_social_media_post", "In the past three years, have you participated in any of the following activities? [Please select all that apply]: Posted about political issues on social media", question),
+         question = ifelse(final_var == "pol_activity_strike", "In the past three years, have you participated in any of the following activities? [Please select all that apply]: Strike or walkout from work", question)) %>%
+  ## 1.5.1.5 surveillance
+  mutate(question = ifelse(final_var == "surveillance_computer_usage", "Do you believe you are monitored by your management while you are at work in your primary job? [Please select all that apply]: Yes, my employer monitors my use of computers or the internet.", question),
+         question = ifelse(final_var == "surveillance_conversation", "Do you believe you are monitored by your management while you are at work in your primary job?[Please select all that apply]: Yes, my employer monitors my conversations with coworkers.", question),
+         question = ifelse(final_var == "surveillance_count", "Do you believe you are monitored by your management while you are at work in your primary job? The amount of surveillance by management. (Count)", question),
+         question = ifelse(final_var == "surveillance_location", "Do you believe you are monitored by your management while you are at work in your primary job? [Please select all that apply]: Yes, my employer monitors my location during my work hours.", question),
+         question = ifelse(final_var == "surveillance_phone_usage", "Do you believe you are monitored by your management while you are at work in your primary job? [Please select all that apply]: Yes, my employer monitors my use of a phone.", question),
+         question = ifelse(final_var == "surveillance_productivity", "Do you believe you are monitored by your management while you are at work in your primary job? [Please select all that apply]: Yes, my employer monitors the pace, speed, or productivity of my work.", question)) %>%
+  ## 1.5.1.6 ware_benefits
+  mutate(question = ifelse(final_var == "ware_benefits_count", "Are any of the following rewards or benefits available to you on your job? Number of benefits. (count)", question),
+         question = ifelse(final_var == "ware_benefits_education", "Are any of the following rewards or benefits available to you on your job? [select all that apply] Education credits", question),
+         question = ifelse(final_var == "ware_benefits_incentives", "Are any of the following rewards or benefits available to you on your job? [select all that apply] Pay-for-performance incentives", question),
+         question = ifelse(final_var == "ware_benefits_other", "Are any of the following rewards or benefits available to you on your job? [select all that apply] - Other", question),
+         question = ifelse(final_var == "ware_benefits_retention_bonus", "Are any of the following rewards or benefits available to you on your job? [select all that apply] Retention bonuses", question),
+         question = ifelse(final_var == "ware_benefits_wage_increase", "Are any of the following rewards or benefits available to you on your job? [select all that apply] Recent increase in hourly pay/referral bonuses", question)) %>%
+  ## 1.5.1.7 ware_ship
+  mutate(question = ifelse(final_var == "ware_ship_consumer", "Warehouses ship products to different kinds of users, for example, to factories, retail stores, or customers at home. Which describes the warehouse where you work? My warehouse ships goods to: Consumers at home", question),
+         question = ifelse(final_var == "ware_ship_count", "Warehouses ship products to different kinds of users, for example, to factories, retail stores, or customers at home. Which describes the warehouse where you work? Number of destinations (Count)", question),
+         question = ifelse(final_var == "ware_ship_factories", "Warehouses ship products to different kinds of users, for example, to factories, retail stores, or customers at home. Which describes the warehouse where you work? My warehouse ships goods to: Other businesses, like factories", question),
+         question = ifelse(final_var == "ware_ship_retail", "Warehouses ship products to different kinds of users, for example, to factories, retail stores, or customers at home. Which describes the warehouse where you work? My warehouse ships goods to: Retail stores", question)) %>%
+  ## 1.5.1.8 ware_tech_direct
+  mutate(question = ifelse(final_var == "ware_tech_direct_asrs", "Which of the following technologies or systems do you often work directly with? [Please select all that apply]: An automated storage and retrieval system (ASRS)", question),
+         question = ifelse(final_var == "ware_tech_direct_conv_belt", "Which of the following technologies or systems do you often work directly with? [Please select all that apply]: A conveyer belt", question),
+         question = ifelse(final_var == "ware_tech_direct_count", "Which of the following technologies or systems do you often work directly with? Number of technology respondent works directly with (count)", question),
+         question = ifelse(final_var == "ware_tech_direct_mhe", "Which of the following technologies or systems do you often work directly with? [Please select all that apply]: Material-handling equipment (MHE, like fork-lifts, pallet jacks, etc.)", question),
+         question = ifelse(final_var == "ware_tech_direct_picking", "Which of the following technologies or systems do you often work directly with? [Please select all that apply]: A voice-activated picking system", question),
+         question = ifelse(final_var == "ware_tech_direct_robot_bring", "Which of the following technologies or systems do you often work directly with? [Please select all that apply]: Automated picking system where robots bring objects to people", question),
+         question = ifelse(final_var == "ware_tech_direct_robot_move", "Which of the following technologies or systems do you often work directly with? [Please select all that apply]: Automated picking system where robots move alongside people", question),
+         question = ifelse(final_var == "ware_tech_direct_manual_picking_storage", "Which of the following technologies or systems do you often work directly with? [Please select all that apply]: Manual/hand picking and storage system", question)) %>%
+  ## 1.5.1.9 ware_tech_indirect
+  mutate(question = ifelse(final_var == "ware_tech_indirect_asrs", "Which of the following technologies is present at your warehouse (even if you don't directly work with it)? [Please select all that apply]: An automated storage and retrieval system (ASRS)", question),
+         question = ifelse(final_var == "ware_tech_indirect_conv_belt", "Which of the following technologies is present at your warehouse (even if you don't directly work with it)? [Please select all that apply]: A conveyer belt", question),
+         question = ifelse(final_var == "ware_tech_indirect_count", "Which of the following technologies is present at your warehouse (even if you don't directly work with it)? Number of technology respondent works indirectly with (count)", question),
+         question = ifelse(final_var == "ware_tech_indirect_mhe", "Which of the following technologies is present at your warehouse (even if you don't directly work with it)? [Please select all that apply]: MHE (material-handling equipment like forklifts, pallet jacks, and tuggers truck)", question),
+         question = ifelse(final_var == "ware_tech_indirect_picking", "Which of the following technologies is present at your warehouse (even if you don't directly work with it)? [Please select all that apply]: A voice-activated picking system", question),
+         question = ifelse(final_var == "ware_tech_indirect_robot_bring", "Which of the following technologies is present at your warehouse (even if you don't directly work with it)? [Please select all that apply]: Automated picking system where robots bring objects to people", question),
+         question = ifelse(final_var == "ware_tech_indirect_robot_move", "Which of the following technologies is present at your warehouse (even if you don't directly work with it)? [Please select all that apply]: Automated picking system where robots move alongside people", question),
+         question = ifelse(final_var == "ware_tech_indirect_manual_picking_storage", "Which of the following technologies is present at your warehouse (even if you don't directly work with it)? [Please select all that apply]: Manual/hand picking and storage system", question)) %>%
+  ## 1.5.1.10 everything else
+  mutate(question = ifelse(final_var == "union_support_num", "If a vote were held today on having a union represent you or continue to represent you, would you support the union?", question),
+         question = ifelse(final_var == "vignette_control", "Vignette control indicator.", question),
+         question = ifelse(final_var == "vignette_coworkertreat", "Vignette co-worker treatment indicator.", question),
+         question = ifelse(final_var == "vignette_neighbortreat", "Vignette neighbor treatment indicator.", question),
+         question = ifelse(final_var == "wage_problem", "Problematic responses to wage_num question: At your primary job, what are your typical hourly earnings, including tips and overtime?", question),
+         question = ifelse(final_var == "race_num", "How would you describe your race or ethnicity?  Check the one that better represents you - Selected Choice", question),
+         question = ifelse(final_var == "state_live_num", "In which state do you currently live? (nominal)", question),
+         question = ifelse(final_var == "est_state_num", "In what state is your primary worksite?  Your primary worksite is the place you spend the most time for your primary job or the main office to which you report. (nominal)", question),
+  ) %>%
+  ## 1.5.2 fill in some observation in raw_vars to allow for clean "fill(down)".
+  mutate(raw_var = ifelse(final_var == "problem_exp_pay_equip", "Q3.4", raw_var),
+         raw_var = ifelse(final_var == "race_num", "Q13.4", raw_var),
+         raw_var = ifelse(final_var == "vignette_control", "Q5.1", raw_var),
+         raw_var = ifelse(final_var == "vignette_coworkertreat", "Q6.1", raw_var),
+         raw_var = ifelse(final_var == "vignette_neighbortreat", "Q7.1", raw_var),
+         raw_var = ifelse(final_var == "union_support_num", "Q4.1", raw_var),
+         raw_var = ifelse(final_var == "ware_benefits_retention_bonus", "Q11.6", raw_var)) %>%
+  fill(question, .direction = "down") %>% # fill downward after arranging rows so that the matched row with question is above the row for _num variable with missing question. 
+  fill(raw_var, .direction = "down") # fill downward after arranging rows so that the matched row with question is above the row for _num variable with missing question. 
+
+wern_pre_dict <- read_csv(here("GSR_folder/wern cleaning directory" , "wern_pre_dict.csv"))
+
+# select the order and raw_var code
+wern_pre_dict_number <- wern_pre_dict %>%
+  select(order, raw_var) 
+
+wern_dict <- wern_pre_dict_number %>%
+  right_join(wern_pre_dict_organized) %>% # right_join by raw_var
+  rbind(wern_pre_dict3_survey_info) %>%
+  mutate(order = ifelse(final_var == "vignette_control", 131, order), # assign the order number for vignette indicators
+         order = ifelse(final_var == "vignette_coworkertreat", 137, order), # assign the order number for vignette indicators
+         order = ifelse(final_var == "vignette_neighbortreat", 143, order)) %>% # assign the order number for vignette indicators
+  arrange(order) %>%
+  select(raw_var, final_var)
+
+
+
+# see codebook data preparation in codebook_test.R
+
+wern_codebook <- readRDS("../WERN_cleaned_data/wern_cleaned_v3.0.rds")
+
+
+# omit the following lines, if your missing values are already properly labelled
+wern_codebook <- detect_missing(wern_codebook,
+                                only_labelled = TRUE, # only labelled values are autodetected as missing
+                                # negative_values_are_missing = T, # negative values are missing values
+                                learn_from_labels = TRUE
+)
+
+metadata(wern_codebook)$name <- "WERN Codebook v3.0"
+metadata(wern_codebook)$description <- "Version 3.0 of codebook describing WERN data."
+metadata(wern_codebook)$datePublished <- "2023-07-05"
+
+wern_codebook_table <- codebook_table(wern_codebook) 
+
+wern_codebook_table2 <- wern_codebook_table %>%
+  select(name, label, value_labels, n_missing, min, median, max, mean, sd, data_type) %>%
+  reshape2::melt(id.vars=c("name", "label", "value_labels", "data_type")) %>%
+  mutate(value = as.numeric(value),
+         value = round(value, digits=2),
+         variable_value = paste0(variable, " = ", value)) %>%
+  select(-variable, -value) %>%
+  group_by(name, label, value_labels, data_type) %>%
+  summarise(variable_value = paste(variable_value, collapse=", ")) %>%
+  ungroup() %>%
+  mutate(variable_value = case_when(grepl("_count", name) ~ variable_value,
+                                    grepl("rk_wgt", name) ~ variable_value,
+                                    is.na(value_labels) ~ NA,
+                                    TRUE ~ variable_value)) %>%
+  left_join(wern_dict, by = c("name" = "final_var")) %>%
+  # reorder
+  select(raw_var, name, everything()) 
+
+
+
+
+# apply conditionalities -----
+
+wern_codebook_table3 <- wern_codebook_table2 %>%
+  mutate(conditionality = case_when(name == "hrs_total_num" ~ "Q1.4: num_job_num = 2 OR Q1.4: num_job_num = 3 ",
+                                    name == "team_stability_num" ~ "Q2.1: team_num = 2 OR Q2.1: team_num = 3",
+                                    name == "union_name" ~ "Q2.16: union_rep_num = 1",
+                                    name == "union_mem_num" ~ "Q2.16: union_rep_num = 1",
+                                    name == "union_ever_num" ~ "Q2.16: union_rep_num = 0",
+                                    name == "est_white_num" ~ "Q2.26: race_attention_num == 1",
+                                    name == "est_black_num" ~ "Q2.26: race_attention_num == 1",
+                                    name == "est_latino_num" ~ "Q2.26: race_attention_num == 1",
+                                    name == "est_asian_other_num" ~ "Q2.26: race_attention_num == 1",
+                                    name == "problem_help_coworker" ~ "Q3.4: problem_exp_count > 0",
+                                    name == "problem_help_former_coworker" ~ "Q3.4: problem_exp_count > 0",
+                                    name == "problem_help_manager" ~ "Q3.4: problem_exp_count > 0",
+                                    name == "problem_help_hr" ~ "Q3.4: problem_exp_count > 0",
+                                    name == "problem_help_union_rep" ~ "Q3.4: problem_exp_count > 0",
+                                    name == "problem_help_family" ~ "Q3.4: problem_exp_count > 0",
+                                    name == "problem_help_friend" ~ "Q3.4: problem_exp_count > 0",
+                                    name == "problem_help_social_media" ~ "Q3.4: problem_exp_count > 0",
+                                    name == "problem_help_church" ~ "Q3.4: problem_exp_count > 0",
+                                    name == "problem_help_other_org" ~ "Q3.4: problem_exp_count > 0",
+                                    name == "problem_help_count" ~ "Q3.4: problem_exp_count > 0",
+                                    name == "union_support_num" ~ "Q2.16: union_rep_num = 1 OR Q2.16: union_rep_num = 0",
+                                    name == "union_imp_wage_num" ~ "Q2.16: union_rep_num = 0",
+                                    name == "union_imp_sec_num" ~ "Q2.16: union_rep_num = 0",
+                                    name == "union_imp_bene_num" ~ "Q2.16: union_rep_num = 0",
+                                    name == "union_imp_train_num" ~ "Q2.16: union_rep_num = 0",
+                                    name == "union_imp_safe_num" ~ "Q2.16: union_rep_num = 0",
+                                    name == "union_imp_cowo_num" ~ "Q2.16: union_rep_num = 0",
+                                    name == "union_imp_mgrs_num" ~ "Q2.16: union_rep_num = 0",
+                                    name == "union_imp_cust_num" ~ "Q2.16: union_rep_num = 0",
+                                    name == "union_imp_wage2_num" ~ "Q2.16: union_rep_num = 1",
+                                    name == "union_imp_sec2_num" ~ "Q2.16: union_rep_num = 1",
+                                    name == "union_imp_bene2_num" ~ "Q2.16: union_rep_num = 1",
+                                    name == "union_imp_train2_num" ~ "Q2.16: union_rep_num = 1",
+                                    name == "union_imp_safe2_num" ~ "Q2.16: union_rep_num = 1",
+                                    name == "union_imp_cowo2_num" ~ "Q2.16: union_rep_num = 1",
+                                    name == "union_imp_mgrs2_num" ~ "Q2.16: union_rep_num = 1",
+                                    name == "union_imp_cust2_num" ~ "Q2.16: union_rep_num = 1",
+                                    name == "union_org_success_num" ~ "Q4.6: union_org_num = 1",
+                                    name == "retal_prom_num" ~ "Q2.16: union_rep_num = 0",
+                                    name == "retal_hrs_num" ~ "Q2.16: union_rep_num = 0",
+                                    name == "retal_trans_num" ~ "Q2.16: union_rep_num = 0",
+                                    name == "retal_fire_num" ~ "Q2.16: union_rep_num = 0",
+                                    name == "retal_shut_num" ~ "Q2.16: union_rep_num = 0",
+                                    name == "retal_out_num" ~ "Q2.16: union_rep_num = 0",
+                                    name == "retal_auto_num" ~ "Q2.16: union_rep_num = 0",
+                                    name == "surveillanceuses_dev_skills_num" ~ "Q4.8: surveillance_productivity = 1",
+                                    name == "surveillanceuses_control_discp_num" ~ "Q4.8: surveillance_productivity = 1",
+                                    name == "hh_lang" ~ "Q13.5: hh_non_eng_num = 1",
+                                    name == "partner_emp_num" ~ "Q1.7: marital_status_num = 1",
+                                    name == "partner_full_part_num" ~ "Q1.8: partner_emp_num = 1",
+                                    name == "wage_num" ~ "Q1.10: pay_type = 3",
+                                    name == "pol_pid_lean_num" ~ "Q13.17: pol_pid3_num = 3",
+                                    name == "pol_vote2020_num" ~ "Q13.20: pol_turnout2020_num = 1",
+                                    # telecommunications
+                                    name == "tele_prop_int_cust_online_chat_num" ~ "Q174: tele_work_type = 'contact or call center agent' OR Q174: tele_work_type = 'retail store associate'",
+                                    name == "tele_prop_int_cust_email_num" ~ "Q174: tele_work_type = 'contact or call center agent' OR Q174: tele_work_type = 'retail store associate'",
+                                    name == "tele_prop_int_cust_phone_num" ~ "Q174: tele_work_type = 'contact or call center agent' OR Q174: tele_work_type = 'retail store associate'",
+                                    name == "tele_call_length_num" ~ "Q174: tele_work_type = 'contact or call center agent' OR Q174: tele_work_type = 'retail store associate'",
+                                    name == "tele_discretion_num" ~ "Q174: tele_work_type = 'contact or call center agent' OR Q174: tele_work_type = 'retail store associate'",
+                                    name == "tele_cust_mstr_blame_num" ~ "Q174: tele_work_type = 'contact or call center agent' OR Q174: tele_work_type = 'retail store associate'",
+                                    name == "tele_cust_mstr_demean_num" ~ "Q174: tele_work_type = 'contact or call center agent' OR Q174: tele_work_type = 'retail store associate'",
+                                    name == "tele_cust_mstr_supervisor_num" ~ "Q174: tele_work_type = 'contact or call center agent' OR Q174: tele_work_type = 'retail store associate'",
+                                    name == "tele_cust_mstr_transfer_frustration_num" ~ "Q174: tele_work_type = 'contact or call center agent' OR Q174: tele_work_type = 'retail store associate'",
+                                    name == "tele_cust_mstr_tech_frustration_num" ~ "Q174: tele_work_type = 'contact or call center agent' OR Q174: tele_work_type = 'retail store associate'",
+                                    # warehousing
+                                    name == "ware_temp_replace_num" ~ "Q1.11: contract_type_num = 1",
+                                    # hospitality
+                                    name == "hosp_restaurant_desc_num" ~ "Q12.1: hosp_screen_num = 2",
+                                    name == "hosp_hotel_desc_num" ~ "Q12.1: hosp_screen_num = 1",
+                                    name == "hosp_front_discre_procedure_num" ~ "Q12.6: hosp_customer_exposure_num = 1",
+                                    name == "hosp_front_discre_cust_comm_num" ~ "Q12.6: hosp_customer_exposure_num = 1",
+                                    name == "hosp_front_discre_cust_assist_num" ~ "Q12.6: hosp_customer_exposure_num = 1",
+                                    name == "hosp_front_discre_cust_complaint_num" ~ "Q12.6: hosp_customer_exposure_num = 1",
+                                    name == "hosp_back_discre_procedure_num" ~ "Q12.6: hosp_customer_exposure_num = 2",
+                                    name == "hosp_back_discre_issue_num" ~ "Q12.6: hosp_customer_exposure_num = 2",
+                                    TRUE ~ NA)) %>%
+  rename("variable name" = name,
+       "questionaire number" = raw_var,
+       "summary statistics" = variable_value,
+       "value labels" = value_labels,
+       "question/description" = label,
+       "data type" = data_type,
+       "conditioned on (show if)" = conditionality)
+
+```
+
+```{r datatable, results='asis'}
+# datatable provide nice, searcheable HTML document. 
+datatable(wern_codebook_table3)
+```
+
