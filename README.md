@@ -1,5 +1,4 @@
 # Portfolio
 
-This portfolio repository contains my dissertation project (Final PDF versions) and data science exercises. 
-
-I work with GeminiAI to create assignments with synthetic data. 
+[Currently a work-in-progress]
+This portfolio repository contains a collection of my data science projects done as a Ph.D. candidate at UC San Diego. 
