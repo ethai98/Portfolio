@@ -1,0 +1,16 @@
+# Core data science stack for this tutorial.
+# Install with:  pip install -r requirements.txt
+# (Versions are lower bounds; the tutorial was validated on the pinned-ish set.)
+
+numpy>=1.21
+pandas>=1.4
+matplotlib>=3.5
+seaborn>=0.11
+scikit-learn>=1.0
+statsmodels>=0.13
+scipy>=1.7
+
+# Optional but recommended on a real team:
+# linearmodels>=4.27     # panel / IV / fixed-effects models for causal work
+# jupyter                # if you prefer notebooks over # %% scripts
+# ruff                   # linter/formatter (see 00_VSCode_AI_Setup_Guide.md)

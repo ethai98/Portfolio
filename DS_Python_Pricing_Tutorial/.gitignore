@@ -1,0 +1,20 @@
+# Environments
+.venv/
+venv/
+env/
+
+# The generated dataset (reproducible via generate_pricing_data.py)
+data/freight_quotes.csv
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Saved models
+*.pkl
+*.joblib
+
+# OS / editor
+.DS_Store
+.vscode/
