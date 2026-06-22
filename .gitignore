@@ -5,3 +5,10 @@
 *.rds
 *.csv
 *.pdf
+
+# macOS / Python
+.DS_Store
+.venv/
+venv/
+__pycache__/
+*.py[cod]
